@@ -12,7 +12,7 @@ import logging
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-# ── Setup ──────────────────────────────────────────────────────────────────────
+# Setup 
 dotenv.load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,7 +23,6 @@ app = FastAPI(
     version="3.0.0",
 )
 
-# ── CORS ───────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -31,16 +30,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Constants ──────────────────────────────────────────────────────────────────
+# Constants 
 APP_NAME  = "job-search-agent"
 USER_ID   = "bachi"
 SESSION_ID = "bachi-session"
 
-# ── Shared session service ─────────────────────────────────────────────────────
 session_service = InMemorySessionService()
 
 
-# ── Create persistent session at startup ──────────────────────────────────────
+#  Create persistent session at startup 
 @app.on_event("startup")
 async def startup():
     await session_service.create_session(
@@ -52,7 +50,7 @@ async def startup():
     logger.info(f"Persistent session created: {SESSION_ID}")
 
 
-# ── Request / Response Models ──────────────────────────────────────────────────
+# Request / Response Models 
 class ChatRequest(BaseModel):
     query: str
 
@@ -72,7 +70,7 @@ class ChatResponse(BaseModel):
     session_state: dict
 
 
-# ── Core Agent Runner ──────────────────────────────────────────────────────────
+# Core Agent Runner
 async def run_agent(query: str) -> dict:
     start_time = time.time()
 
@@ -116,7 +114,7 @@ async def run_agent(query: str) -> dict:
     }
 
 
-# ── Endpoints ──────────────────────────────────────────────────────────────────
+# Endpoints
 
 @app.get("/health", tags=["Health"])
 def health():
