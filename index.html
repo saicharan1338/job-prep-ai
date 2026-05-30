@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Job Prep AI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-dark.min.css">
+  <style>
+    body { background: #0d1117; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; font-family: sans-serif; }
+    .chat-box { width: 100%; max-width: 800px; }
+    .bubble { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .bubble.user { background: #1f3a5f; text-align: right; }
+    .input-row { display: flex; gap: 10px; margin-top: 20px; }
+    input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #30363d; background: #161b22; color: #fff; font-size: 1rem; }
+    button { padding: 12px 24px; background: #4f8eff; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+    button:disabled { opacity: 0.5; }
+  </style>
+</head>
+<body>
+  <div class="chat-box" id="chat"></div>
+  <div class="input-row">
+    <input id="input" placeholder="e.g. Data science jobs in Bangalore" onkeydown="if(event.key==='Enter') send()" />
+    <button onclick="send()" id="btn">Send</button>
+    <button onclick="reset()" style="background:#dc2626">Reset</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <script>
+    const chat = document.getElementById('chat');
+    const input = document.getElementById('input');
+    const btn = document.getElementById('btn');
+    const API = 'http://localhost:8000';
+
+    function addBubble(text, role) {
+      const div = document.createElement('div');
+      div.className = `bubble markdown-body ${role}`;
+      div.innerHTML = role === 'agent' ? marked.parse(text) : `<p>${text}</p>`;
+      chat.appendChild(div);
+      div.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function send() {
+      const query = input.value.trim();
+      if (!query) return;
+      addBubble(query, 'user');
+      input.value = '';
+      btn.disabled = true;
+      addBubble('Thinking...', 'agent');
+
+      const res = await fetch(`${API}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json();
+      chat.lastChild.remove();
+      addBubble(data.response, 'agent');
+      btn.disabled = false;
+    }
+
+    async function reset() {
+      await fetch(`${API}/reset`, { method: 'POST' });
+      chat.innerHTML = '';
+      addBubble('Session reset! Ask me for jobs.', 'agent');
+    }
+
+    addBubble('👋 Welcome! Tell me what job you are looking for.\n\nExample: *"Data science jobs in Bangalore"*', 'agent');
+  </script>
+</body>
+</html>
